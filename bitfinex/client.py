@@ -11,12 +11,14 @@ HOST = "api.bitfinex.com"
 VERSION = "v1"
 
 PATH_SYMBOLS = "symbols"
-PATH_TICKER = "ticker/%s"
+#PATH_TICKER = "ticker/%s"
+PATH_TICKER = "pubticker/%s"
 PATH_TODAY = "today/%s"
 PATH_STATS = "stats/%s"
 PATH_LENDBOOK = "lendbook/%s"
 PATH_ORDERBOOK = "book/%s"
-
+PATH_TRADES = "trades/%s"
+PATH_SUMMARY = '/summary'
 # HTTP request timeout in seconds
 TIMEOUT = 5.0
 
@@ -53,6 +55,21 @@ class TradeClient:
             "X-BFX-PAYLOAD": data
         }
 
+    def account_summary(self):
+        """Returns a 30-day summary of your 
+        trading volume and return on 
+        margin funding"""
+        payload = {
+
+            "request": "/v1/summary",
+            "nonce": self._nonce
+        }
+        signed_payload = self._sign_payload(payload)
+        r = requests.post(self.URL + "/summary", headers=signed_payload, verify=True)
+        json_resp = r.json()
+        return json_resp
+
+ 
     def place_order(self, amount, price, side, ord_type, symbol='btcusd', exchange='bitfinex'):
         """
         Submit a new order.
@@ -76,7 +93,7 @@ class TradeClient:
             "type": ord_type
 
         }
-
+        
         signed_payload = self._sign_payload(payload)
         r = requests.post(self.URL + "/order/new", headers=signed_payload, verify=True)
         json_resp = r.json()
@@ -395,9 +412,16 @@ class Client:
         data = self._get(self.url_for(PATH_TICKER, (symbol)))
 
         # convert all values to floats
+        #return data
         return self._convert_to_floats(data)
 
+#PATH_TRADES = "/trades/%s"
 
+    def public_trades(self,symbol):
+        
+        data = self._get(self.url_for(PATH_TRADES, (symbol)))
+        return data
+        
     def today(self, symbol):
         """
         GET /today/:symbol
@@ -410,8 +434,8 @@ class Client:
 
         # convert all values to floats
         return self._convert_to_floats(data)
-
-
+        
+        
     def stats(self, symbol):
         """
         curl https://api.bitfinex.com/v1/stats/btcusd
